@@ -7,3 +7,8 @@ export async function openDb() {
     driver: sqlite3.Database,
   });
 }
+
+export const userStaticInfo = {
+  user_name: "Sergio",
+  password: "1234567",
+};
