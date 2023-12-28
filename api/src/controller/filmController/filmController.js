@@ -31,12 +31,10 @@ async function verifyUserCreatingFilm(user_id, res) {
   return user;
 }
 
-async function verifyUserEditingFilm(user_id, res) {
+async function verifyUserEditingFilm(user_id) {
   const user = await dbGetUserById(user_id);
   if (user.isAdmin === 1) {
-    return res
-      .status(400)
-      .json({ error: "invalid user, cannot edit movies with a admin user" });
+    throw new Error("Invalid user, cannot edit movies with an admin user");
   }
   return user;
 }
@@ -77,20 +75,22 @@ async function dbUpdateFilm(grade, film_id) {
     const db = await openDb();
     const film = await dbGetFilmById(film_id);
     const film_total_grade = film.total_grade;
-    const film_new_average_grade =
-      (film_total_grade + grade) /
-      (film_total_grade === 0 ? 1 : film_total_grade + 1);
     const film_new_total_grade = film_total_grade + 1;
+    const film_new_average_grade =
+      (film_total_grade * film.average_grade + grade) / film_new_total_grade;
+
     await db.run(
       "UPDATE Film SET average_grade=?, total_grade=? WHERE film_id=?",
       [film_new_average_grade, film_new_total_grade, film_id]
     );
+
     const updatedFilmObject = {
       film_id: film.film_id,
       film_name: film.film_name,
       total_grade: film_new_total_grade,
       average_grade: film_new_average_grade,
     };
+
     return updatedFilmObject;
   } catch (error) {
     console.log(error);
@@ -141,7 +141,7 @@ export async function updateFilm(req, res) {
     return res.status(400).json({ error: "invalid payload" });
   }
   try {
-    verifyUserEditingFilm(user_id, res);
+    await verifyUserEditingFilm(user_id);
     const updatedFilm = await dbUpdateFilm(grade, film_id);
     return res.status(200).json({ film: updatedFilm });
   } catch (error) {
