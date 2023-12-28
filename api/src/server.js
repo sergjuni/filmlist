@@ -12,4 +12,4 @@ app.use(cors());
 app.use("/user", userRoutes);
 app.use("/film", filmRoutes);
 
-app.listen(3000);
+app.listen(8000);
