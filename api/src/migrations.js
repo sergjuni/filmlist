@@ -25,58 +25,6 @@ async function createFilmTable() {
   );
 }
 
-async function createAdminUser() {
-  const newAdminUser = await questionAsync("Enter username: ");
-  const newAdminPassword = await questionAsync("Enter password: ");
-
-  const db = await openDb();
-  const hashPassword = await bcrypt.hash(newAdminPassword, 10);
-
-  const result = await db.run(
-    "INSERT INTO Admin (user_name, password) VALUES (?, ?)",
-    [newAdminUser, hashPassword]
-  );
-  const newAdminId = result.lastID;
-  const newAdmin = await db.get(
-    "SELECT * FROM Admin WHERE admin_user_id = ?",
-    newAdminId
-  );
-
-  const { user_name, admin_user_id } = newAdmin;
-
-  console.log(
-    `Admin created successfully! ${JSON.stringify({
-      user_name,
-      admin_user_id,
-    })}`
-  );
-}
-
-async function deleteAdminUser() {
-  const adminUserName = await questionAsync(
-    "Enter a admin username to delete: "
-  );
-
-  const db = await openDb();
-
-  const user = await db.get("SELECT * FROM Admin WHERE user_name=?", [
-    adminUserName,
-  ]);
-
-  console.log("user", user);
-  if (!user) {
-    return console.error({ error: "User not found" });
-  }
-
-  await db.get("DELETE FROM Admin WHERE user_name=?", [adminUserName]);
-
-  console.log(
-    `Admin deleted successfully! ${JSON.stringify({
-      user_name: adminUserName,
-    })}`
-  );
-}
-
 async function hashPassword(password) {
   return await bcrypt.hash(password, 10);
 }
