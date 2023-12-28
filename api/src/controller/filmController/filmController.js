@@ -24,9 +24,7 @@ async function dbGetUserById(user_id) {
 async function verifyUserCreatingFilm(user_id, res) {
   const user = await dbGetUserById(user_id);
   if (!user.isAdmin === 1) {
-    return res
-      .status(400)
-      .json({ error: "invalid user, must be a admin to use this api" });
+    throw new Error("invalid user, must be a admin to use this api");
   }
   return user;
 }
