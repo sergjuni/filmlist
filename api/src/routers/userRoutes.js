@@ -11,11 +11,11 @@ import { validateToken } from "../JWT.js";
 
 const userRoutes = Router();
 
-userRoutes.post("/", postUser);
-userRoutes.put("/", updateUser);
-userRoutes.delete("/", deleteUser);
+userRoutes.post("/", validateToken, postUser);
+userRoutes.put("/", validateToken, updateUser);
+userRoutes.delete("/", validateToken, deleteUser);
 userRoutes.post("/login", loginUser);
 userRoutes.get("/profile", validateToken, userProfile);
-userRoutes.get("/:id", getUserById);
+userRoutes.get("/:id", validateToken, getUserById);
 
 export default userRoutes;
