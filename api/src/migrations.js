@@ -12,11 +12,17 @@ function randomPassword() {
 }
 
 async function createUserTable() {
-  openDb().then((db) => {
-    db.exec(
-      "CREATE TABLE IF NOT EXISTS User ( user_id TEXT PRIMARY KEY, user_name TEXT UNIQUE COLLATE NOCASE, password STRING, isAdmin BOOLEAN DEFAULT 0 )"
-    );
-  });
+  const db = await openDb();
+  await db.exec(
+    "CREATE TABLE IF NOT EXISTS User ( user_id TEXT PRIMARY KEY, user_name TEXT UNIQUE COLLATE NOCASE, password STRING, isAdmin BOOLEAN DEFAULT 0 )"
+  );
+}
+
+async function createFilmTable() {
+  const db = await openDb();
+  await db.exec(
+    "CREATE TABLE IF NOT EXISTS Film (film_id TEXT PRIMARY KEY, film_name TEXT UNIQUE COLLATE BINARY, average_grade INTEGER DEFAULT 0, total_grade INTEGER DEFAULT 0, director TEXT, actors TEXT[])"
+  );
 }
 
 async function createAdminUser() {
@@ -111,6 +117,7 @@ async function migrations() {
   console.log("Running migrations");
   try {
     await createUserTable();
+    await createFilmTable();
     const newUser = await createUser();
     console.log(`new user created, ${JSON.stringify(newUser)} `);
   } catch (error) {
