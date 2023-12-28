@@ -38,14 +38,13 @@ async function dbGetUserById(user_id) {
   }
 }
 
-async function dbUpdateUser(user_id, user_name, user_password) {
+async function dbUpdateUser(user_id, user_name, user_password, isAdmin) {
   try {
     const db = await openDb();
-    await db.run("UPDATE User SET user_name=?, password=? WHERE user_id=?", [
-      user_name,
-      user_password,
-      user_id,
-    ]);
+    await db.run(
+      "UPDATE User SET user_name=?, password=?, isAdmin=? WHERE user_id=?",
+      [user_name, user_password, isAdmin, user_id]
+    );
   } catch (error) {
     console.log("error", error);
     throw new Error("error in the dbuptadeuser method:", error);
@@ -90,14 +89,14 @@ export async function getUserById(req, res) {
 }
 
 export async function updateUser(req, res) {
-  const { user_id, user_name, password } = req.body;
-  if ((!user_id, user_name, password)) {
+  const { user_id, user_name, password, isAdmin } = req.body;
+  if (!user_id || !user_name || !password) {
     return res.status(400).json({ error: "invalid payload" });
   }
 
   try {
     const hashedPassword = await hashPassword(password);
-    await dbUpdateUser(user_id, user_name, hashedPassword);
+    await dbUpdateUser(user_id, user_name, hashedPassword, isAdmin);
     const user = await dbGetUserById(user_id);
     return res.status(200).json({ user: user });
   } catch (error) {
