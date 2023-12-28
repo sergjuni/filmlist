@@ -71,7 +71,7 @@ export async function postUser(req, res) {
     await dbInsertUser(new_user_id, user_name, hashedPassword);
     const new_user = await dbGetUserById(new_user_id);
 
-    return res.status(200).json({ user: { new_user_id, user_name, password } });
+    return res.status(201).json({ user: { new_user_id, user_name, password } });
   } catch (error) {
     res.status(500).json({ error: { message: error.message, error } });
   }
