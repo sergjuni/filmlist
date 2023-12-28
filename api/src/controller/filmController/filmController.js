@@ -72,17 +72,17 @@ async function dbGetFilmById(film_id) {
   }
 }
 
-async function dbUpdateFilm(film_id) {
+async function dbUpdateFilm(grade, film_id) {
   try {
     const db = await openDb();
     const film = await dbGetFilmById(film_id);
     const film_total_grade = film.total_grade;
     const film_new_average_grade =
-      (film_total_grade + user_grade) /
+      (film_total_grade + grade) /
       (film_total_grade === 0 ? 1 : film_total_grade + 1);
-    const film_new_total_grade = film_total_grade + grade;
+    const film_new_total_grade = film_total_grade + 1;
     await db.run(
-      "UPDATE User SET avarage_grade=?, total_grade=?,  WHERE film_id=?",
+      "UPDATE Film SET average_grade=?, total_grade=? WHERE film_id=?",
       [film_new_average_grade, film_new_total_grade, film_id]
     );
     const updatedFilmObject = {
@@ -93,6 +93,7 @@ async function dbUpdateFilm(film_id) {
     };
     return updatedFilmObject;
   } catch (error) {
+    console.log(error);
     throw new Error("error in the dbUpdateFilm method:");
   }
 }
@@ -141,7 +142,7 @@ export async function updateFilm(req, res) {
   }
   try {
     verifyUserEditingFilm(user_id, res);
-    const updatedFilm = dbUpdateFilm(grade, film_id);
+    const updatedFilm = await dbUpdateFilm(grade, film_id);
     return res.status(200).json({ film: updatedFilm });
   } catch (error) {
     res.status(500).json({ error: { message: error.message } });
