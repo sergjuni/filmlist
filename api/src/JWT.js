@@ -24,6 +24,7 @@ export function validateToken(req, res, next) {
     const validToken = verify(accessToken, "jwtsecret");
     if (validToken) {
       req.authenticated = true;
+      req.user_id = validToken.user_id;
       return next();
     }
   } catch (error) {
