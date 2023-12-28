@@ -3,6 +3,7 @@ import {
   postFilm,
   updateFilm,
   getAllFilms,
+  getFilmById,
 } from "../controller/filmController/filmController.js";
 import { validateToken } from "../JWT.js";
 
@@ -11,6 +12,6 @@ const filmRoutes = Router();
 filmRoutes.post("/", validateToken, postFilm);
 filmRoutes.put("/", validateToken, updateFilm);
 filmRoutes.get("/all", getAllFilms);
-// filmRoutes.get("/:id", getFilmById);
+filmRoutes.get("/:id", getFilmById);
 
 export default filmRoutes;
