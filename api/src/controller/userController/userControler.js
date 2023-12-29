@@ -46,7 +46,6 @@ async function dbUpdateUser(user_id, user_name, user_password, isAdmin) {
       [user_name, user_password, isAdmin, user_id]
     );
   } catch (error) {
-    console.log("error", error);
     throw new Error("error in the dbuptadeuser method:", error);
   }
 }
@@ -63,15 +62,15 @@ async function dbDeleteUser(user_id) {
 export async function postUser(req, res) {
   const { user_name, password } = req.body;
   if (!user_name && password) {
-    return res.status(400).json({ error: "invalid payload" });
+    return res.status(400).json({ error: { message: "invalid payload" } });
   }
-  const new_user_id = uuidv4();
+  const user_id = uuidv4();
   try {
     const hashedPassword = await hashPassword(password);
-    await dbInsertUser(new_user_id, user_name, hashedPassword);
-    const new_user = await dbGetUserById(new_user_id);
+    await dbInsertUser(user_id, user_name, hashedPassword);
+    const new_user = await dbGetUserById(user_id);
 
-    return res.status(201).json({ user: { new_user_id, user_name, password } });
+    return res.status(201).json({ user: { user_id, user_name, password } });
   } catch (error) {
     res.status(500).json({ error: { message: error.message, error } });
   }
@@ -91,7 +90,7 @@ export async function getUserById(req, res) {
 export async function updateUser(req, res) {
   const { user_id, user_name, password, isAdmin } = req.body;
   if (!user_id || !user_name || !password) {
-    return res.status(400).json({ error: "invalid payload" });
+    return res.status(400).json({ error: { message: "invalid payload" } });
   }
 
   try {
@@ -100,14 +99,14 @@ export async function updateUser(req, res) {
     const user = await dbGetUserById(user_id);
     return res.status(200).json({ user: user });
   } catch (error) {
-    res.status(500).json({ error: { message: error.message, error } });
+    res.status(500).json({ error: { message: error.message } });
   }
 }
 
 export async function deleteUser(req, res) {
   const user_id = req.body.user_id;
   if (!user_id) {
-    return res.status(400).json({ error: "invalid payload" });
+    return res.status(400).json({ error: { message: "invalid payload" } });
   }
   try {
     await dbDeleteUser(user_id);
@@ -119,13 +118,16 @@ export async function deleteUser(req, res) {
 
 export async function loginUser(req, res) {
   const { user_name, password } = req.body;
+  if (!user_name || !password) {
+    return res.status(400).json({ error: "Invalid payload" });
+  }
   const db = await openDb();
   try {
     const user = await db.get("SELECT * FROM User WHERE user_name=?", [
       user_name,
     ]);
     if (!user) {
-      res.status(400).json({ error: "User not found" });
+      return res.status(404).json({ error: "user not found" });
     }
     const dbUserPassword = user.password;
     bcrypt.compare(password, dbUserPassword).then((match) => {
@@ -138,11 +140,14 @@ export async function loginUser(req, res) {
         res.cookie("access-token", accessToken, {
           maxAge: 60 * 60 * 24 * 30 * 1000,
           httpOnly: true,
+          secure: true,
+          path: "/",
         });
-        res.json({ user: user.user_name, status: "success" });
+        res.json({ user: user, status: "success" });
       }
     });
   } catch (error) {
+    console.log("error", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 }

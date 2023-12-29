@@ -2,7 +2,12 @@ import { openDb } from "../../dbconfig.js";
 import { v4 as uuidv4 } from "uuid";
 
 function verifyPayload(payload, res) {
-  if (!payload.film_name || !payload.director || !payload.actors) {
+  if (
+    !payload.film_name ||
+    !payload.director ||
+    !payload.actors ||
+    !payload.user_id
+  ) {
     return res.status(400).json({ error: "invalid payload" });
   }
 
@@ -91,7 +96,6 @@ async function dbUpdateFilm(grade, film_id) {
 
     return updatedFilmObject;
   } catch (error) {
-    console.log(error);
     throw new Error("error in the dbUpdateFilm method:");
   }
 }
@@ -99,7 +103,7 @@ async function dbUpdateFilm(grade, film_id) {
 async function dbGetAllFilms() {
   try {
     const db = await openDb();
-    const result = await db.get("SELECT * FROM Film");
+    const result = await db.all("SELECT * FROM Film LIMIT 100");
     return result;
   } catch (error) {
     throw new Error("error in the dbGetAllFilms method:");
@@ -107,12 +111,9 @@ async function dbGetAllFilms() {
 }
 
 export async function postFilm(req, res) {
-  const { user_id } = req;
-
-  const { film_name, director, actors } = req.body;
+  const { film_name, director, actors, user_id } = req.body;
   const new_film_id = uuidv4();
   verifyPayload(req.body, res);
-  verifyUserCreatingFilm(user_id, res);
   const payload = {
     new_film_id,
     film_name,
@@ -121,6 +122,7 @@ export async function postFilm(req, res) {
   };
 
   try {
+    await verifyUserCreatingFilm(user_id, res);
     await dbInsertFilm(payload);
     const new_film = await dbGetFilmById(new_film_id);
     const actorsString = new_film.actors;
@@ -133,10 +135,9 @@ export async function postFilm(req, res) {
 }
 
 export async function updateFilm(req, res) {
-  const { user_id } = req;
-  const { grade, film_id } = req.body;
-  if (!grade || !film_id) {
-    return res.status(400).json({ error: "invalid payload" });
+  const { grade, film_id, user_id } = req.body;
+  if (!grade || !film_id || !user_id) {
+    return res.status(400).json({ error: { message: "invalid payload" } });
   }
   try {
     await verifyUserEditingFilm(user_id);
@@ -150,7 +151,11 @@ export async function updateFilm(req, res) {
 export async function getAllFilms(_req, res) {
   try {
     const allFilms = await dbGetAllFilms();
-    return res.status(200).json({ films: allFilms });
+    const filmsWithArrays = allFilms.map((film) => ({
+      ...film,
+      actors: film.actors.split(",").map((actor) => actor.trim()),
+    }));
+    return res.status(200).json({ films: filmsWithArrays });
   } catch (error) {
     res.status(500).json({ error: { message: error.message } });
   }
@@ -162,6 +167,6 @@ export async function getFilmById(req, res) {
     const film = await dbGetFilmById(film_id);
     return res.status(200).json({ film: film });
   } catch (error) {
-    res.status(500).json({ error: { message: error.message, error } });
+    res.status(500).json({ error: { message: error.message } });
   }
 }
